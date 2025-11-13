@@ -19,7 +19,36 @@
 
 ## 📖 상세 가이드
 
-- **[상세 학습 가이드](./docs/STUDY-GUIDE.md)** - 각 Phase별 구체적인 학습 방법과 코드 예제
+### 🎓 핵심 학습 자료
+- **[⭐ 상세 학습 가이드 (NEW!)](./docs/STUDY-GUIDE-DETAILED.md)** - 개념 설명 + 수학적 유도 + 코드 해설
+- **[빠른 시작 가이드](./QUICK-START.md)** - 5분 안에 시작하기
+
+### 📚 Phase별 심화 가이드 (NEW!)
+각 Phase에 대한 매우 상세한 설명과 구현을 제공합니다:
+
+- **[Phase 1: 수학 기초](./docs/STUDY-GUIDE-DETAILED.md#phase-1-수학-및-이론-기초)** - 확률론, 정보이론, 선형대수
+  - 베이즈 정리 완전 정복
+  - KL Divergence 직관적 이해
+  - 실습 코드 포함
+
+- **[Phase 2: 딥러닝 기초](./docs/phase2-deep-learning.md)** - 신경망의 모든 것
+  - 역전파 알고리즘 처음부터 구현
+  - 활성화 함수 비교 및 시각화
+  - XOR 문제로 이해하는 은닉층
+
+- **[Phase 3: VAE 완전 정복](./docs/phase3-vae-detailed.md)** - VAE 마스터하기
+  - ELBO 수식 단계별 유도
+  - Reparameterization Trick 완벽 이해
+  - MNIST VAE 전체 구현
+  - β-VAE, Latent Space 분석
+
+- **[Phase 4: Diffusion Models](./docs/phase4-diffusion-detailed.md)** - 최신 생성 모델
+  - Forward/Reverse Process 수학
+  - U-Net 아키텍처 상세 해설
+  - DDPM 구현 및 학습
+  - Stable Diffusion 이해의 기초
+
+### 📋 추가 리소스
 - **[필수 논문 리스트](./resources/PAPERS.md)** - 읽어야 할 50+ 논문 목록
 - **[학습 리소스](./resources/RESOURCES.md)** - 교재, 강의, 블로그, 도구
 - **[환경 설정 가이드](./resources/SETUP-GUIDE.md)** - 개발 환경 구축 방법
