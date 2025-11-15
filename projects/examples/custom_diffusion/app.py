@@ -40,25 +40,48 @@ class DiffusionApp:
     def load_model(self, checkpoint_path):
         """
         Load model from checkpoint
-
-        TODO: Replace with actual model loading
         """
-        # Example:
-        # from code.diffusion import DDPM, UNet
-        #
-        # unet = UNet(...)
-        # ddpm = DDPM(model=unet, ...)
-        #
-        # checkpoint = torch.load(checkpoint_path)
-        # ddpm.load_state_dict(checkpoint['model_state_dict'])
-        # ddpm.to(self.device)
-        # ddpm.eval()
-        #
-        # return ddpm
+        # Import diffusion models
+        sys.path.append(str(Path(__file__).parent.parent.parent.parent / "code"))
+        from diffusion.ddpm import DDPM
+        from diffusion.ddim import DDIMSampler
+        from diffusion.unet import UNet
 
-        # Placeholder
-        print("⚠️  Using placeholder model. Replace with actual model loading!")
-        return None
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        config = checkpoint['config']
+
+        # Build U-Net
+        unet = UNet(
+            in_channels=config.model.in_channels,
+            out_channels=config.model.out_channels,
+            model_channels=config.model.model_channels,
+            channel_mult=tuple(config.model.channel_mult),
+            num_res_blocks=config.model.num_res_blocks,
+            attention_resolutions=tuple(config.model.attention_resolutions),
+            dropout=config.model.dropout,
+            num_heads=config.model.num_heads
+        )
+
+        # Build DDPM
+        ddpm = DDPM(
+            model=unet,
+            timesteps=config.diffusion.timesteps,
+            schedule_type=config.diffusion.schedule_type,
+            beta_start=config.diffusion.beta_start,
+            beta_end=config.diffusion.beta_end,
+            objective=config.diffusion.objective
+        )
+
+        # Load weights
+        ddpm.load_state_dict(checkpoint['model_state_dict'])
+        ddpm.to(self.device)
+        ddpm.eval()
+
+        # Store config and DDIM sampler
+        self.config = config
+        self.ddim = DDIMSampler(ddpm)
+
+        return ddpm
 
     @torch.no_grad()
     def generate_samples(self,
@@ -74,7 +97,7 @@ class DiffusionApp:
             num_samples: Number of images to generate
             num_steps: Sampling steps (fewer = faster)
             sampler: 'ddpm' or 'ddim'
-            guidance_scale: Guidance scale for conditional generation
+            guidance_scale: Guidance scale for conditional generation (not used for unconditional)
             seed: Random seed
 
         Returns:
@@ -82,35 +105,56 @@ class DiffusionApp:
         """
         # Set seed
         torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
 
         print(f"🎨 Generating {num_samples} samples...")
         print(f"   Sampler: {sampler}")
         print(f"   Steps: {num_steps}")
         print(f"   Seed: {seed}")
 
-        # TODO: Implement actual sampling
-        # if sampler == 'ddim':
-        #     ddim = DDIMSampler(self.model)
-        #     samples = ddim.sample(
-        #         batch_size=num_samples,
-        #         num_steps=num_steps,
-        #         device=self.device
-        #     )
-        # else:
-        #     samples = self.model.sample(
-        #         batch_size=num_samples,
-        #         device=self.device
-        #     )
+        # Generate samples
+        if sampler == 'ddim':
+            samples_tensor = self.ddim.sample_from_batch(
+                batch_size=num_samples,
+                channels=self.config.model.in_channels,
+                image_size=self.config.model.image_size,
+                num_steps=num_steps,
+                eta=0.0,  # Deterministic
+                device=self.device,
+                show_progress=True
+            )
+        else:  # ddpm
+            samples_tensor = self.model.sample(
+                batch_size=num_samples,
+                channels=self.config.model.in_channels,
+                image_size=self.config.model.image_size,
+                device=self.device,
+                show_progress=True
+            )
 
-        # Placeholder: return random images
-        import numpy as np
+        # Denormalize to [0, 1]
+        samples_tensor = (samples_tensor + 1.0) / 2.0
+        samples_tensor = torch.clamp(samples_tensor, 0.0, 1.0)
+
+        # Convert to PIL images
         from PIL import Image
+        import numpy as np
 
         samples = []
         for i in range(num_samples):
-            # Random image (replace with actual samples)
-            img_array = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
-            img = Image.fromarray(img_array)
+            # Convert to numpy (C, H, W) -> (H, W, C)
+            img_np = samples_tensor[i].cpu().numpy()
+            img_np = np.transpose(img_np, (1, 2, 0))
+
+            # Convert to uint8
+            img_np = (img_np * 255).astype(np.uint8)
+
+            # Handle grayscale
+            if img_np.shape[2] == 1:
+                img_np = img_np.squeeze(-1)
+
+            img = Image.fromarray(img_np)
             samples.append(img)
 
         print(f"✅ Generated {len(samples)} samples!")

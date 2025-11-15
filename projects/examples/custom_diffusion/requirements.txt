@@ -1,0 +1,21 @@
+# Core dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Diffusion model dependencies
+numpy>=1.24.0
+Pillow>=9.5.0
+tqdm>=4.65.0
+PyYAML>=6.0
+
+# Gradio UI
+gradio>=3.50.0
+
+# Logging (optional)
+tensorboard>=2.13.0
+wandb>=0.15.0  # Optional, for Weights & Biases
+
+# Utilities
+matplotlib>=3.7.0
+scipy>=1.10.0
